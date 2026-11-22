@@ -17,7 +17,7 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     nginx
 
-# Configure and install PHP extensions (gd, zip, pdo_pgsql, pgsql)
+# Configure and install PHP extensions
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) gd zip pdo pdo_pgsql pgsql
 
@@ -31,7 +31,14 @@ COPY . /var/www
 # Install composer dependencies
 RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs
 
-# Nginx config
+# Script entrypoint untuk mengganti port Nginx sesuai Environment PORT Railway
+RUN echo '#!/bin/sh\n\
+PORT=${PORT:-80}\n\
+sed -i "s/listen 80;/listen ${PORT};/g" /etc/nginx/sites-available/default\n\
+php-fpm -D\n\
+nginx -g "daemon off;"' > /entrypoint.sh && chmod +x /entrypoint.sh
+
+# Nginx config template
 RUN echo 'server {\n\
     listen 80;\n\
     index index.php index.html;\n\
@@ -53,6 +60,4 @@ RUN echo 'server {\n\
     }\n\
 }' > /etc/nginx/sites-available/default
 
-EXPOSE 80
-
-CMD php-fpm -D && nginx -g "daemon off;"
+CMD ["/entrypoint.sh"]
