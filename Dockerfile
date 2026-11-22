@@ -1,4 +1,4 @@
-FROM php:8.2-fpm
+FROM php:8.4-fpm
 
 # Install dependencies & extensions
 RUN apt-get update && apt-get install -y \
@@ -14,9 +14,11 @@ RUN apt-get update && apt-get install -y \
     git \
     curl \
     libpq-dev \
+    libzip-dev \
     nginx
 
-RUN docker-php-ext-install pdo pdo_pgsql pgsql
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install gd zip pdo pdo_pgsql pgsql
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
