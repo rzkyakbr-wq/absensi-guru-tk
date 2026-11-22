@@ -1,11 +1,12 @@
 FROM php:8.4-fpm
 
-# Install dependencies & extensions
+# Install system dependencies & extension packages
 RUN apt-get update && apt-get install -y \
     build-essential \
     libpng-dev \
     libjpeg62-turbo-dev \
     libfreetype6-dev \
+    libzip-dev \
     locales \
     zip \
     jpegoptim optipng pngquant gifsicle \
@@ -16,7 +17,9 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     nginx
 
-RUN docker-php-ext-install pdo pdo_pgsql pgsql
+# Configure and install PHP extensions (gd, zip, pdo_pgsql, pgsql)
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install -j$(nproc) gd zip pdo pdo_pgsql pgsql
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -25,7 +28,8 @@ WORKDIR /var/www
 
 COPY . /var/www
 
-RUN composer install --no-dev --optimize-autoloader
+# Install composer dependencies
+RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs
 
 # Nginx config
 RUN echo 'server {\n\
