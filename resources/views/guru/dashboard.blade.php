@@ -9,7 +9,7 @@
     <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
 
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="bg-slate-100 min-h-screen flex justify-center">
@@ -235,10 +235,25 @@
         <!-- ================= POPUP MODAL KAMERA SCAN ================= -->
         <div id="camera-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
             <div class="bg-white rounded-3xl p-6 w-full max-w-sm text-center shadow-2xl relative">
-                <h3 id="scan-title" class="text-base font-bold text-slate-800 mb-3">Scan QR Code</h3>
-                <div id="reader" class="rounded-2xl overflow-hidden border-2 border-teal-500 mb-4"></div>
-                <button onclick="closeCameraModal()" class="w-full py-3 bg-gray-200 text-gray-700 font-bold rounded-xl text-xs">
-                    Batal Scan
+                <h3 id="scan-title" class="text-base font-bold text-slate-800 mb-1">Scan QR Code</h3>
+                <p class="text-[11px] text-slate-400 mb-3">Arahkan kamera tepat ke QR Code resmi sekolah</p>
+
+                <!-- Container Video Scanner -->
+                <div id="reader" class="rounded-2xl overflow-hidden border-2 border-teal-500 mb-3 bg-slate-900 min-h-[220px] flex items-center justify-center text-white text-xs">
+                    <span class="text-slate-400">Menyiapkan kamera...</span>
+                </div>
+
+                <!-- Opsi Alternatif: Upload File Foto QR -->
+                <div class="mb-3 p-2 bg-teal-50 border border-teal-100 rounded-xl">
+                    <label for="qr-input-file" class="cursor-pointer text-xs font-bold text-teal-700 hover:text-teal-800 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-image text-sm"></i> 
+                        <span>Atau Pilih Foto / Gambar QR</span>
+                        <input type="file" id="qr-input-file" accept="image/*" class="hidden" onchange="scanQrFromFile(this)">
+                    </label>
+                </div>
+
+                <button onclick="closeCameraModal()" class="w-full py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl text-xs transition">
+                    Tutup Scanner
                 </button>
             </div>
         </div>
@@ -333,49 +348,113 @@
         }
 
         let html5QrcodeScanner = null;
+        let isScannerRunning = false;
 
         function openCameraScanner(type) {
             document.getElementById('scan-title').innerText = type === 'masuk' ? 'Scan QR Absen Masuk' : 'Scan QR Absen Pulang';
             document.getElementById('camera-modal').classList.remove('hidden');
 
-            if (!html5QrcodeScanner) {
-                html5QrcodeScanner = new Html5Qrcode("reader");
+            if (typeof Html5Qrcode === 'undefined') {
+                alert("Library scanner belum selesai dimuat. Silakan refresh halaman dan coba kembali!");
+                closeCameraModal();
+                return;
             }
 
-            const config = {
-                fps: 15,
-                qrbox: function(viewfinderWidth, viewfinderHeight) {
-                    const minEdgeSize = Math.min(viewfinderWidth, viewfinderHeight);
-                    const qrboxSize = Math.max(180, Math.floor(minEdgeSize * 0.75));
-                    return { width: qrboxSize, height: qrboxSize };
-                },
-                aspectRatio: 1.0
-            };
+            if (html5QrcodeScanner && isScannerRunning) {
+                html5QrcodeScanner.stop().catch(() => {}).finally(() => {
+                    isScannerRunning = false;
+                    startScannerInstance();
+                });
+            } else {
+                startScannerInstance();
+            }
+        }
 
-            html5QrcodeScanner.start(
-                { facingMode: { ideal: "environment" } },
-                config,
-                onScanSuccess,
-                (errorMessage) => {
-                    // Frame scan attempt (silent)
+        function startScannerInstance() {
+            try {
+                if (!html5QrcodeScanner) {
+                    html5QrcodeScanner = new Html5Qrcode("reader", {
+                        formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE ],
+                        verbose: false
+                    });
                 }
-            ).catch(err => {
-                console.error("Camera Error:", err);
-                alert("Gagal membuka kamera: " + (err.message || err) + ".\n\nPastikan Anda telah mengizinkan izin akses kamera (Camera Permission) di browser Anda!");
-                closeCameraModal();
-            });
+
+                // Jangan set aspectRatio ketat agar kamera tidak gepeng/terdistorsi
+                const config = {
+                    fps: 20,
+                    qrbox: function(viewfinderWidth, viewfinderHeight) {
+                        const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+                        const edge = Math.max(160, Math.floor(minEdge * 0.8));
+                        return { width: edge, height: edge };
+                    }
+                };
+
+                html5QrcodeScanner.start(
+                    { facingMode: { ideal: "environment" } },
+                    config,
+                    (decodedText) => {
+                        onScanSuccess(decodedText);
+                    },
+                    (error) => {}
+                ).then(() => {
+                    isScannerRunning = true;
+                }).catch(err => {
+                    console.warn("Mencoba kamera default:", err);
+                    html5QrcodeScanner.start(
+                        true,
+                        config,
+                        (decodedText) => {
+                            onScanSuccess(decodedText);
+                        },
+                        (error) => {}
+                    ).then(() => {
+                        isScannerRunning = true;
+                    }).catch(fallbackErr => {
+                        console.error("Camera Error:", fallbackErr);
+                        alert("Tidak dapat mengakses kamera: " + (fallbackErr.message || fallbackErr) + 
+                              "\n\nTips: Berikan izin kamera di browser, atau gunakan opsi 'Pilih Foto / Gambar QR'.");
+                    });
+                });
+            } catch (e) {
+                console.error("Scanner Error:", e);
+                alert("Terjadi kendala saat membuka scanner: " + e.message);
+            }
         }
 
         function closeCameraModal() {
-            if (html5QrcodeScanner && html5QrcodeScanner.isScanning) {
+            if (html5QrcodeScanner && isScannerRunning) {
                 html5QrcodeScanner.stop().then(() => {
+                    isScannerRunning = false;
                     document.getElementById('camera-modal').classList.add('hidden');
                 }).catch(() => {
+                    isScannerRunning = false;
                     document.getElementById('camera-modal').classList.add('hidden');
                 });
             } else {
                 document.getElementById('camera-modal').classList.add('hidden');
             }
+        }
+
+        function scanQrFromFile(input) {
+            if (!input.files || input.files.length === 0) return;
+            const file = input.files[0];
+
+            if (typeof Html5Qrcode === 'undefined') {
+                alert("Library scanner belum selesai dimuat.");
+                return;
+            }
+
+            const fileScanner = new Html5Qrcode("reader");
+            fileScanner.scanFile(file, true)
+                .then(decodedText => {
+                    onScanSuccess(decodedText);
+                })
+                .catch(err => {
+                    alert("QR Code tidak terdeteksi pada gambar ini. Pastikan gambar jelas dan tidak terpotong!");
+                })
+                .finally(() => {
+                    input.value = '';
+                });
         }
 
         function onScanSuccess(decodedText) {
