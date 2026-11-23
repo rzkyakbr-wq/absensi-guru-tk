@@ -28,23 +28,22 @@ WORKDIR /var/www
 
 COPY . /var/www
 
-# Install composer dependencies
+# Install composer packages
 RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs
 
-# Script entrypoint untuk mengganti port Nginx sesuai Environment PORT Railway
-RUN echo '#!/bin/sh\n\
-PORT=${PORT:-80}\n\
-sed -i "s/listen 80;/listen ${PORT};/g" /etc/nginx/sites-available/default\n\
-php-fpm -D\n\
-nginx -g "daemon off;"' > /entrypoint.sh && chmod +x /entrypoint.sh
+# Set folder permission untuk Laravel
+RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
 
-# Nginx config template
+# Konfigurasi Nginx
 RUN echo 'server {\n\
-    listen 80;\n\
-    index index.php index.html;\n\
-    error_log  /var/log/nginx/error.log;\n\
-    access_log /var/log/nginx/access.log;\n\
+    listen 80 default_server;\n\
+    listen [::]:80 default_server;\n\
     root /var/www/public;\n\
+    index index.php index.html;\n\
+    server_name _;\n\
+    location / {\n\
+        try_files $uri $uri/ /index.php?$query_string;\n\
+    }\n\
     location ~ \.php$ {\n\
         try_files $uri =404;\n\
         fastcgi_split_path_info ^(.+\.php)(/.+)$;\n\
@@ -54,10 +53,9 @@ RUN echo 'server {\n\
         fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;\n\
         fastcgi_param PATH_INFO $fastcgi_path_info;\n\
     }\n\
-    location / {\n\
-        try_files $uri $uri/ /index.php?$query_string;\n\
-        gzip_static on;\n\
-    }\n\
 }' > /etc/nginx/sites-available/default
 
-CMD ["/entrypoint.sh"]
+EXPOSE 80
+
+# Jalankan PHP-FPM dan Nginx bersamaan
+CMD service php8.4-fpm start 2>/dev/null || php-fpm -D; nginx -g "daemon off;"
