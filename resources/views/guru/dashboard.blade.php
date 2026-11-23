@@ -21,7 +21,7 @@
             <div class="p-5 flex items-center justify-between border-b border-slate-100">
                 <div class="flex items-center gap-3">
                     <div class="relative w-12 h-12 rounded-full overflow-hidden bg-teal-600 text-white font-bold flex items-center justify-center text-lg shadow-sm border border-teal-200">
-                        <img id="avatar-preview-header" src="{{ Auth::user()->profile_photo ? asset('storage/' . Auth::user()->profile_photo) : 'https://ui-avatars.com/api/?name=' . urlencode(Auth::user()->name) . '&background=0D9488&color=fff' }}" alt="Foto Profil" class="w-full h-full object-cover">
+                        <img id="avatar-preview-header" src="{{ Auth::user()->profile_photo ? (str_starts_with(Auth::user()->profile_photo, 'data:') ? Auth::user()->profile_photo : asset('storage/' . Auth::user()->profile_photo)) : 'https://ui-avatars.com/api/?name=' . urlencode(Auth::user()->name) . '&background=0D9488&color=fff' }}" alt="Foto Profil" class="w-full h-full object-cover">
                     </div>
                     <div>
                         <p class="text-xs text-gray-400">Selamat datang,</p>
@@ -84,7 +84,7 @@
                     <h4 class="font-bold text-slate-800 text-sm mb-3">Layanan Guru</h4>
                     <div class="grid grid-cols-3 gap-3 text-center">
                         <!-- Izin/Sakit via WA -->
-                        <a href="https://wa.me/62?text=Halo%20Admin%20TK%20Aisyiyah%2006,%20saya%20{{ urlencode(Auth::user()->name) }}%20ingin%20mengajukan%20Izin/Sakit%20hari%20ini." target="_blank" class="flex flex-col items-center gap-2 group">
+                        <a href="https://wa.me/6285741391100?text=Halo%20Admin%20TK%20Aisyiyah%2006,%20saya%20{{ urlencode(Auth::user()->name) }}%20ingin%20mengajukan%20Izin/Sakit%20hari%20ini." target="_blank" class="flex flex-col items-center gap-2 group">
                             <div class="w-14 h-14 rounded-2xl bg-amber-50 group-hover:bg-amber-100 text-amber-600 flex items-center justify-center text-xl shadow-sm border border-amber-100 transition">
                                 <i class="fa-solid fa-file-medical"></i>
                             </div>
@@ -177,7 +177,7 @@
             
             <div class="bg-white rounded-3xl border border-slate-100 p-6 text-center shadow-sm mb-4">
                 <div class="relative w-24 h-24 mx-auto mb-3">
-                    <img id="avatar-preview-main" src="{{ Auth::user()->profile_photo ? asset('storage/' . Auth::user()->profile_photo) : 'https://ui-avatars.com/api/?name=' . urlencode(Auth::user()->name) . '&background=0D9488&color=fff' }}" alt="Foto Profil" class="w-full h-full rounded-full object-cover border-4 border-teal-50 shadow-md">
+                    <img id="avatar-preview-main" src="{{ Auth::user()->profile_photo ? (str_starts_with(Auth::user()->profile_photo, 'data:') ? Auth::user()->profile_photo : asset('storage/' . Auth::user()->profile_photo)) : 'https://ui-avatars.com/api/?name=' . urlencode(Auth::user()->name) . '&background=0D9488&color=fff' }}" alt="Foto Profil" class="w-full h-full rounded-full object-cover border-4 border-teal-50 shadow-md">
                     
                     <!-- Form Input Foto -->
                     <label for="profile-photo-input" title="Ubah Foto Profil" class="absolute bottom-0 right-0 bg-teal-600 hover:bg-teal-700 text-white w-8 h-8 rounded-full flex items-center justify-center cursor-pointer shadow-md transition">

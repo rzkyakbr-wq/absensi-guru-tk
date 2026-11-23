@@ -133,34 +133,61 @@ class AuthController extends Controller
         ));
     }
 
-    // 7. Simpan Foto Profil Guru (Permanen ke DB & Storage)
+    // 7. Simpan Foto Profil Guru (Permanen di Supabase DB sebagai Base64)
     public function updateProfilePhoto(Request $request)
     {
         try {
             $request->validate([
-                'photo' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+                'photo' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+            ], [
+                'photo.required' => 'File foto wajib dipilih.',
+                'photo.image'    => 'File harus berupa gambar.',
+                'photo.max'      => 'Ukuran foto maksimal 5 MB.',
             ]);
 
             /** @var User $user */
             $user = Auth::user();
 
             if ($request->hasFile('photo')) {
-                // Hapus foto lama dari storage jika ada
-                if ($user->profile_photo && Storage::disk('public')->exists($user->profile_photo)) {
-                    Storage::disk('public')->delete($user->profile_photo);
+                $file = $request->file('photo');
+
+                // Resize & kompres menjadi avatar 200x200 agar tersimpan permanen di database Supabase (tidak terhapus saat redeploy)
+                $imageData = file_get_contents($file->getRealPath());
+                $srcImage = @imagecreatefromstring($imageData);
+
+                if ($srcImage) {
+                    $width = imagesx($srcImage);
+                    $height = imagesy($srcImage);
+
+                    // Crop bujur sangkar (square) dari tengah
+                    $size = min($width, $height);
+                    $x = (int) (($width - $size) / 2);
+                    $y = (int) (($height - $size) / 2);
+
+                    $targetSize = 200;
+                    $destImage = imagecreatetruecolor($targetSize, $targetSize);
+
+                    imagecopyresampled($destImage, $srcImage, 0, 0, $x, $y, $targetSize, $targetSize, $size, $size);
+
+                    ob_start();
+                    imagejpeg($destImage, null, 80);
+                    $compressedData = ob_get_clean();
+
+                    imagedestroy($srcImage);
+                    imagedestroy($destImage);
+
+                    $base64 = 'data:image/jpeg;base64,' . base64_encode($compressedData);
+                } else {
+                    $base64 = 'data:' . $file->getMimeType() . ';base64,' . base64_encode($imageData);
                 }
 
-                // Simpan foto baru ke folder storage/app/public/profiles
-                $path = $request->file('photo')->store('profiles', 'public');
-
-                // Simpan ke database
-                $user->profile_photo = $path;
+                $user->profile_photo = $base64;
                 $user->save();
 
                 return response()->json([
                     'status'    => 'success',
-                    'message'   => 'Foto profil berhasil disimpan!',
-                    'photo_url' => asset('storage/' . $path)
+                    'message'   => 'Foto profil berhasil disimpan permanen!',
+                    'photo_url' => $base64
                 ]);
             }
 
