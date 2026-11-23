@@ -1,6 +1,6 @@
 FROM php:8.4-fpm
 
-# Install system dependencies & extension packages
+# Install system dependencies & extensions
 RUN apt-get update && apt-get install -y \
     build-essential \
     libpng-dev \
@@ -17,7 +17,7 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     nginx
 
-# Configure and install PHP extensions
+# Install PHP extensions
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) gd zip pdo pdo_pgsql pgsql
 
@@ -28,13 +28,13 @@ WORKDIR /var/www
 
 COPY . /var/www
 
-# Install composer packages
+# Install Composer dependencies
 RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs
 
-# Set folder permission untuk Laravel
+# Permission folder storage & cache
 RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
 
-# Konfigurasi Nginx
+# Konfigurasi Nginx Natively
 RUN echo 'server {\n\
     listen 80 default_server;\n\
     listen [::]:80 default_server;\n\
@@ -57,5 +57,5 @@ RUN echo 'server {\n\
 
 EXPOSE 80
 
-# Jalankan PHP-FPM dan Nginx bersamaan
-CMD service php8.4-fpm start 2>/dev/null || php-fpm -D; nginx -g "daemon off;"
+# Jalankan PHP-FPM di background dan Nginx di foreground
+CMD php-fpm -D && nginx -g "daemon off;"
