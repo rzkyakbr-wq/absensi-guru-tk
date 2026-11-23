@@ -8,6 +8,7 @@ use App\Models\Attendance;
 use Carbon\Carbon;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\AttendanceExport;
+use Illuminate\Support\Facades\Hash;
 
 class AdminController extends Controller
 {
@@ -72,5 +73,22 @@ class AdminController extends Controller
         $fileName = 'rekap_absensi_' . date('Y-m-d_H-i-s') . '.xlsx';
 
         return Excel::download(new AttendanceExport($guruId, $startDate, $endDate), $fileName);
+    }
+
+    // Reset Password Guru oleh Admin
+    public function resetGuruPassword(Request $request, $userId)
+    {
+        $request->validate([
+            'new_password' => 'required|string|min:6',
+        ], [
+            'new_password.required' => 'Password baru wajib diisi.',
+            'new_password.min'      => 'Password baru minimal harus 6 karakter.',
+        ]);
+
+        $guru = User::where('id', $userId)->where('role', 'guru')->firstOrFail();
+        $guru->password = Hash::make($request->new_password);
+        $guru->save();
+
+        return back()->with('success', 'Password akun guru ' . $guru->name . ' (' . $guru->email . ') berhasil direset menjadi: ' . $request->new_password);
     }
 }

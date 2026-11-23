@@ -35,6 +35,14 @@
             </div>
         @endif
 
+        <!-- Pesan Sukses -->
+        @if (session('success'))
+            <div class="bg-emerald-50 border border-emerald-100 text-emerald-700 text-xs rounded-xl p-3 mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-circle-check text-emerald-500 text-sm"></i>
+                <span>{{ session('success') }}</span>
+            </div>
+        @endif
+
         <!-- Form Login -->
         <form action="{{ route('login.post') }}" method="POST" class="space-y-4">
             @csrf
@@ -46,7 +54,10 @@
             </div>
 
             <div>
-                <label for="password" class="block text-xs font-bold text-slate-700 mb-1">Password</label>
+                <div class="flex items-center justify-between mb-1">
+                    <label for="password" class="block text-xs font-bold text-slate-700">Password</label>
+                    <a href="{{ route('password.request') }}" class="text-[11px] text-teal-600 font-semibold hover:underline">Lupa Password?</a>
+                </div>
                 <input type="password" id="password" name="password" required placeholder="Masukkan password" 
                        class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-teal-600 text-slate-800">
             </div>

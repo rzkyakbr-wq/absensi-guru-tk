@@ -171,4 +171,53 @@ class AuthController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Gagal mengunggah foto: ' . $e->getMessage()], 500);
         }
     }
+
+    // 7. Tampilkan Halaman Lupa Password
+    public function showForgotPassword()
+    {
+        return view('auth.forgot-password');
+    }
+
+    // 8. Proses Reset Password Guru Mandiri
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'email'                 => 'required|email|exists:users,email',
+            'verification'          => 'required|string',
+            'password'              => 'required|string|min:6|confirmed',
+        ], [
+            'email.required'        => 'Alamat email wajib diisi.',
+            'email.email'           => 'Format email tidak valid.',
+            'email.exists'          => 'Alamat email tidak ditemukan dalam sistem.',
+            'verification.required' => 'NIP / NIK atau Nama Lengkap wajib diisi untuk verifikasi.',
+            'password.required'     => 'Password baru wajib diisi.',
+            'password.min'          => 'Password baru minimal harus 6 karakter.',
+            'password.confirmed'    => 'Konfirmasi password baru tidak cocok.',
+        ]);
+
+        $user = User::where('email', $request->email)->first();
+
+        // Verifikasi: cocokkan dengan NIP/NIK atau Nama Lengkap (case-insensitive)
+        $inputVerif = trim(strtolower($request->verification));
+        $dbNip = $user->nip_nik ? trim(strtolower($user->nip_nik)) : null;
+        $dbName = trim(strtolower($user->name));
+
+        $matched = false;
+        if ($dbNip && $inputVerif === $dbNip) {
+            $matched = true;
+        } elseif ($inputVerif === $dbName || str_contains($dbName, $inputVerif) || str_contains($inputVerif, $dbName)) {
+            $matched = true;
+        }
+
+        if (!$matched) {
+            return back()->withErrors([
+                'verification' => 'Verifikasi gagal: NIP/NIK atau Nama Lengkap tidak cocok dengan data akun email ini. Jika lupa, silakan hubungi Admin TK.',
+            ])->withInput($request->except(['password', 'password_confirmation']));
+        }
+
+        $user->password = Hash::make($request->password);
+        $user->save();
+
+        return redirect()->route('login')->with('success', 'Password akun ' . $user->email . ' berhasil diperbarui! Silakan masuk dengan password baru.');
+    }
 }

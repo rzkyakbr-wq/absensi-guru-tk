@@ -38,6 +38,107 @@
             </div>
         </div>
 
+        <!-- Alert Notifikasi -->
+        @if(session('success'))
+            <div class="my-4 bg-emerald-50 border border-emerald-100 text-emerald-800 text-xs rounded-2xl p-4 flex items-center justify-between shadow-sm">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
+                    <span class="font-bold">{{ session('success') }}</span>
+                </div>
+                <button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        @endif
+
+        @if(session('error'))
+            <div class="my-4 bg-rose-50 border border-rose-100 text-rose-800 text-xs rounded-2xl p-4 flex items-center justify-between shadow-sm">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-triangle-exclamation text-rose-600 text-base"></i>
+                    <span class="font-bold">{{ session('error') }}</span>
+                </div>
+                <button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        @endif
+
+        <!-- Card Kelola Akun Guru & Reset Password -->
+        <div class="my-6 bg-slate-50 p-5 rounded-2xl border border-slate-200">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center text-base shadow-sm">
+                        <i class="fa-solid fa-users-gear"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-800">Kelola Akun Guru & Reset Password</h2>
+                        <p class="text-[11px] text-slate-400">Admin dapat mengatur ulang password guru yang lupa akun.</p>
+                    </div>
+                </div>
+                <button type="button" onclick="toggleGuruTable()" class="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-teal-600 hover:bg-teal-50 transition flex items-center gap-2 shadow-sm">
+                    <span id="toggleText">Tampilkan Guru ({{ count($allGurus) }})</span>
+                    <i id="toggleIcon" class="fa-solid fa-chevron-down text-[10px] transition-transform duration-200"></i>
+                </button>
+            </div>
+
+            <!-- Tabel Daftar Guru (Toggleable) -->
+            <div id="guruTableWrapper" class="hidden overflow-x-auto border border-slate-200 rounded-xl bg-white mt-4 shadow-sm">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                        <tr class="bg-slate-100 text-[11px] font-bold text-slate-500 uppercase border-b border-slate-200">
+                            <th class="p-3">Nama Guru</th>
+                            <th class="p-3">Email</th>
+                            <th class="p-3">NIP / NIK</th>
+                            <th class="p-3 text-center">Reset Password Baru</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        @forelse($allGurus as $guru)
+                            <tr class="hover:bg-slate-50/70 transition">
+                                <td class="p-3 font-bold text-slate-800">{{ $guru->name }}</td>
+                                <td class="p-3 text-slate-600">{{ $guru->email }}</td>
+                                <td class="p-3 text-slate-500">{{ $guru->nip_nik ?? '-' }}</td>
+                                <td class="p-3">
+                                    <form action="{{ route('admin.resetGuruPassword', $guru->id) }}" method="POST" 
+                                          onsubmit="return confirm('Yakin ingin mereset password akun guru {{ $guru->name }}?')"
+                                          class="flex items-center justify-center gap-2">
+                                        @csrf
+                                        <input type="text" name="new_password" value="password123" required 
+                                               placeholder="Password baru"
+                                               class="px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 bg-white w-36 focus:outline-none focus:border-teal-600">
+                                        <button type="submit" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-lg text-xs transition flex items-center gap-1.5 shadow-sm">
+                                            <i class="fa-solid fa-key text-[10px]"></i> Reset
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="4" class="p-4 text-center text-slate-400">Belum ada akun guru terdaftar.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <script>
+            function toggleGuruTable() {
+                const el = document.getElementById('guruTableWrapper');
+                const icon = document.getElementById('toggleIcon');
+                const text = document.getElementById('toggleText');
+                if (el.classList.contains('hidden')) {
+                    el.classList.remove('hidden');
+                    icon.classList.add('rotate-180');
+                    text.innerText = 'Sembunyikan Guru';
+                } else {
+                    el.classList.add('hidden');
+                    icon.classList.remove('rotate-180');
+                    text.innerText = 'Tampilkan Guru ({{ count($allGurus) }})';
+                }
+            }
+        </script>
+
         <!-- Form Filter Guru & Tanggal -->
         <div class="my-6 bg-slate-50 p-4 rounded-2xl border border-slate-100">
             <form action="{{ route('admin.dashboard') }}" method="GET" class="flex flex-wrap items-end gap-3">

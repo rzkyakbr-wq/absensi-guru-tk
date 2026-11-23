@@ -19,6 +19,10 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
 Route::post('/register', [AuthController::class, 'register'])->name('register.post');
 
+// Route Reset Password Mandiri (Guru)
+Route::get('/forgot-password', [AuthController::class, 'showForgotPassword'])->name('password.request');
+Route::post('/forgot-password', [AuthController::class, 'resetPassword'])->name('password.update');
+
 // Route Khusus Guru (Harus Login)
 Route::middleware(['auth'])->prefix('guru')->group(function () {
     Route::get('/dashboard', [AuthController::class, 'guruDashboard'])->name('guru.dashboard');
@@ -30,5 +34,6 @@ Route::middleware(['auth'])->prefix('guru')->group(function () {
 Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
     Route::post('/update-status/{userId}', [AdminController::class, 'updateStatus'])->name('admin.updateStatus');
+    Route::post('/reset-password/{userId}', [AdminController::class, 'resetGuruPassword'])->name('admin.resetGuruPassword');
     Route::get('/export-excel', [AdminController::class, 'exportExcel'])->name('admin.exportExcel');
 });
