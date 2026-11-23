@@ -34,6 +34,9 @@ RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs
 # Permission folder storage & cache
 RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
 
+# Buat symbolic link storage public
+RUN php artisan storage:link || true
+
 # Konfigurasi Nginx Natively
 RUN echo 'server {\n\
     listen 80 default_server;\n\
@@ -57,5 +60,5 @@ RUN echo 'server {\n\
 
 EXPOSE 80
 
-# Jalankan PHP-FPM di background dan Nginx di foreground
-CMD php-fpm -D && nginx -g "daemon off;"
+# Jalankan storage link, PHP-FPM di background dan Nginx di foreground
+CMD php artisan storage:link && php-fpm -D && nginx -g "daemon off;"
