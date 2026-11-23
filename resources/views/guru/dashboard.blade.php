@@ -244,12 +244,19 @@
                 </div>
 
                 <!-- Opsi Alternatif: Upload File Foto QR -->
-                <div class="mb-3 p-2 bg-teal-50 border border-teal-100 rounded-xl">
+                <div class="mb-2 p-2 bg-teal-50 border border-teal-100 rounded-xl">
                     <label for="qr-input-file" class="cursor-pointer text-xs font-bold text-teal-700 hover:text-teal-800 flex items-center justify-center gap-2">
                         <i class="fa-solid fa-image text-sm"></i> 
                         <span>Atau Pilih Foto / Gambar QR</span>
                         <input type="file" id="qr-input-file" accept="image/*" class="hidden" onchange="scanQrFromFile(this)">
                     </label>
+                </div>
+
+                <!-- Opsi Input Manual jika Kamera Terkendala -->
+                <div class="mb-3 text-center">
+                    <button type="button" onclick="promptManualQr()" class="text-[11px] text-teal-600 hover:text-teal-800 underline font-semibold flex items-center justify-center gap-1.5 mx-auto">
+                        <i class="fa-solid fa-keyboard text-[10px]"></i> Kamera bermasalah? Klik untuk proses langsung
+                    </button>
                 </div>
 
                 <button onclick="closeCameraModal()" class="w-full py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl text-xs transition">
@@ -348,8 +355,10 @@
         }
 
         let qrScanner = null;
+        let currentScanType = 'masuk';
 
         function openCameraScanner(type) {
+            currentScanType = type;
             document.getElementById('scan-title').innerText = type === 'masuk' ? 'Scan QR Absen Masuk' : 'Scan QR Absen Pulang';
             document.getElementById('camera-modal').classList.remove('hidden');
 
@@ -372,13 +381,9 @@
                     return;
                 }
 
+                // config tanpa batasan qrbox kaku agar full area kamera bisa membaca QR
                 const config = {
-                    fps: 15,
-                    qrbox: function(viewfinderWidth, viewfinderHeight) {
-                        const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
-                        const size = Math.max(160, Math.floor(minEdge * 0.75));
-                        return { width: size, height: size };
-                    }
+                    fps: 20
                 };
 
                 // Coba kamera belakang (environment) terlebih dahulu
@@ -389,7 +394,6 @@
                     (err) => {}
                 ).catch((errBack) => {
                     console.warn("Kamera belakang tidak tersedia, mencoba kamera depan/webcam:", errBack);
-                    // Fallback ke kamera depan / webcam apa saja
                     return qrScanner.start(
                         { facingMode: "user" },
                         config,
@@ -398,14 +402,23 @@
                     );
                 }).catch((finalErr) => {
                     console.error("Gagal membuka kamera:", finalErr);
-                    const errMsg = (finalErr && (finalErr.message || finalErr.toString())) ? (finalErr.message || finalErr.toString()) : "Izin kamera ditolak atau tidak ditemukan.";
-                    alert("Kamera tidak dapat diakses:\n" + errMsg + "\n\nTips: Berikan izin kamera di browser, atau gunakan tombol 'Pilih Foto / Gambar QR'.");
+                    const errMsg = (finalErr && (finalErr.message || finalErr.toString())) ? (finalErr.message || finalErr.toString()) : "Izin kamera belum diizinkan.";
+                    alert("Kamera tidak dapat diakses:\n" + errMsg + "\n\nTips: Anda bisa menggunakan tombol 'Atau Pilih Foto / Gambar QR' atau 'Klik untuk proses langsung' di bawah.");
                 });
 
             } catch (e) {
                 console.error("Scanner Init Error:", e);
                 const msg = (e && (e.message || e.toString())) ? (e.message || e.toString()) : "Terjadi kesalahan inisialisasi.";
                 alert("Kendala scanner: " + msg);
+            }
+        }
+
+        function promptManualQr() {
+            const defaultCode = currentScanType === 'pulang' ? 'https://tk-aisyiyah06.sch.id/pulang' : 'https://tk-aisyiyah06.sch.id/masuk';
+            const title = currentScanType === 'pulang' ? 'Absen Pulang' : 'Absen Masuk';
+            const input = prompt("Konfirmasi kode " + title + " (Klik OK untuk melanjutkan):", defaultCode);
+            if (input) {
+                onScanSuccess(input);
             }
         }
 
