@@ -29,7 +29,12 @@ class AttendanceController extends Controller
             $scannedCode = trim($request->qr_code);
 
             // A. ABSEN MASUK
-            if ($scannedCode === $this->qrKeyMasuk) {
+            $isMasuk = ($scannedCode === $this->qrKeyMasuk) 
+                || str_contains($scannedCode, 'tk-aisyiyah06.sch.id/masuk') 
+                || strtolower($scannedCode) === 'masuk'
+                || strtolower($scannedCode) === 'absen_masuk';
+
+            if ($isMasuk) {
                 $existing = Attendance::where('user_id', $user->id)->where('date', $today)->first();
 
                 if ($existing && $existing->time_in) {
@@ -56,7 +61,12 @@ class AttendanceController extends Controller
             }
 
             // B. ABSEN PULANG
-            if ($scannedCode === $this->qrKeyPulang) {
+            $isPulang = ($scannedCode === $this->qrKeyPulang) 
+                || str_contains($scannedCode, 'tk-aisyiyah06.sch.id/pulang') 
+                || strtolower($scannedCode) === 'pulang'
+                || strtolower($scannedCode) === 'absen_pulang';
+
+            if ($isPulang) {
                 $attendance = Attendance::where('user_id', $user->id)->where('date', $today)->first();
 
                 if (!$attendance || !$attendance->time_in) {

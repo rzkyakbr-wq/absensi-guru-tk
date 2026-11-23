@@ -23,6 +23,12 @@
             </div>
 
             <div class="flex items-center gap-3">
+                <!-- Tombol Lihat / Cetak QR Code -->
+                <button type="button" onclick="openQrModal()" 
+                   class="px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl text-xs transition flex items-center gap-2 shadow-sm">
+                    <i class="fa-solid fa-qrcode"></i> Lihat & Cetak QR Code
+                </button>
+
                 <!-- Tombol Export Excel Berdasarkan Filter -->
                 <a href="{{ route('admin.exportExcel', ['guru_id' => $selectedGuru, 'start_date' => $startDate, 'end_date' => $endDate]) }}" 
                    class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition flex items-center gap-2 shadow-sm">
@@ -235,6 +241,75 @@
         </div>
 
     </div>
+
+    <!-- ================= MODAL CETAK & LIHAT QR CODE ================= -->
+    <div id="qrModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-3xl p-6 md:p-8 w-full max-w-2xl shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-6">
+                <div>
+                    <h3 class="text-lg font-black text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-qrcode text-teal-600"></i> QR Code Absensi Resmi
+                    </h3>
+                    <p class="text-xs text-slate-400 mt-0.5">Tampilkan di layar atau cetak di kertas untuk ditempel di sekolah.</p>
+                </div>
+                <button type="button" onclick="closeQrModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Dua Kolom QR Code (Masuk & Pulang) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 print:grid-cols-2" id="printableQrArea">
+                <!-- QR Code Absen Masuk -->
+                <div class="border-2 border-emerald-500 rounded-3xl p-6 text-center bg-emerald-50/30 flex flex-col items-center">
+                    <span class="bg-emerald-600 text-white text-[11px] font-black uppercase px-3 py-1 rounded-full mb-3 tracking-wider">
+                        Absen Masuk
+                    </span>
+                    <div class="p-3 bg-white rounded-2xl shadow-sm border border-emerald-100 mb-3">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=https://tk-aisyiyah06.sch.id/masuk" 
+                             alt="QR Absen Masuk" class="w-48 h-48 object-contain">
+                    </div>
+                    <h4 class="text-xs font-bold text-slate-800">TK Aisyiyah Bustanul Athfal 06</h4>
+                    <p class="text-[10px] text-slate-500 mt-1">Batas Hadir Tepat Waktu: 07:00 WIB</p>
+                </div>
+
+                <!-- QR Code Absen Pulang -->
+                <div class="border-2 border-teal-500 rounded-3xl p-6 text-center bg-teal-50/30 flex flex-col items-center">
+                    <span class="bg-slate-800 text-white text-[11px] font-black uppercase px-3 py-1 rounded-full mb-3 tracking-wider">
+                        Absen Pulang
+                    </span>
+                    <div class="p-3 bg-white rounded-2xl shadow-sm border border-teal-100 mb-3">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=https://tk-aisyiyah06.sch.id/pulang" 
+                             alt="QR Absen Pulang" class="w-48 h-48 object-contain">
+                    </div>
+                    <h4 class="text-xs font-bold text-slate-800">TK Aisyiyah Bustanul Athfal 06</h4>
+                    <p class="text-[10px] text-slate-500 mt-1">Scan saat jam kepulangan selesai</p>
+                </div>
+            </div>
+
+            <!-- Tombol Aksi Modal -->
+            <div class="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-slate-100">
+                <button type="button" onclick="window.print()" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl text-xs transition flex items-center gap-2 shadow-sm">
+                    <i class="fa-solid fa-print"></i> Cetak QR Code
+                </button>
+                <button type="button" onclick="closeQrModal()" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition">
+                    Tutup
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        function openQrModal() {
+            document.getElementById('qrModal').classList.remove('hidden');
+        }
+
+        function closeQrModal() {
+            document.getElementById('qrModal').classList.add('hidden');
+        }
+    </script>
 
 </body>
 </html>

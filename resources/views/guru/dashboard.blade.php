@@ -332,22 +332,42 @@
             });
         }
 
-        let html5QrcodeScanner;
+        let html5QrcodeScanner = null;
 
         function openCameraScanner(type) {
             document.getElementById('scan-title').innerText = type === 'masuk' ? 'Scan QR Absen Masuk' : 'Scan QR Absen Pulang';
             document.getElementById('camera-modal').classList.remove('hidden');
 
-            html5QrcodeScanner = new Html5Qrcode("reader");
+            if (!html5QrcodeScanner) {
+                html5QrcodeScanner = new Html5Qrcode("reader");
+            }
+
+            const config = {
+                fps: 15,
+                qrbox: function(viewfinderWidth, viewfinderHeight) {
+                    const minEdgeSize = Math.min(viewfinderWidth, viewfinderHeight);
+                    const qrboxSize = Math.max(180, Math.floor(minEdgeSize * 0.75));
+                    return { width: qrboxSize, height: qrboxSize };
+                },
+                aspectRatio: 1.0
+            };
+
             html5QrcodeScanner.start(
-                { facingMode: "environment" },
-                { fps: 15, qrbox: { width: 250, height: 250 } },
-                onScanSuccess
-            );
+                { facingMode: { ideal: "environment" } },
+                config,
+                onScanSuccess,
+                (errorMessage) => {
+                    // Frame scan attempt (silent)
+                }
+            ).catch(err => {
+                console.error("Camera Error:", err);
+                alert("Gagal membuka kamera: " + (err.message || err) + ".\n\nPastikan Anda telah mengizinkan izin akses kamera (Camera Permission) di browser Anda!");
+                closeCameraModal();
+            });
         }
 
         function closeCameraModal() {
-            if (html5QrcodeScanner) {
+            if (html5QrcodeScanner && html5QrcodeScanner.isScanning) {
                 html5QrcodeScanner.stop().then(() => {
                     document.getElementById('camera-modal').classList.add('hidden');
                 }).catch(() => {
