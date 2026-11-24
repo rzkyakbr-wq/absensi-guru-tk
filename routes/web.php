@@ -45,4 +45,5 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::post('/update-status/{userId}', [AdminController::class, 'updateStatus'])->name('admin.updateStatus');
     Route::post('/reset-password/{userId}', [AdminController::class, 'resetGuruPassword'])->name('admin.resetGuruPassword');
     Route::get('/export-excel', [AdminController::class, 'exportExcel'])->name('admin.exportExcel');
+    Route::delete('/delete-attendance/{attendanceId}', [AdminController::class, 'deleteAttendance'])->name('admin.deleteAttendance');
 });

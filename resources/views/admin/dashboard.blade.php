@@ -193,6 +193,7 @@
                         <th class="p-4">Jam Pulang</th>
                         <th class="p-4">Status</th>
                         <th class="p-4 text-center">Ubah Status (Admin)</th>
+                        <th class="p-4 text-center">Hapus</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 text-xs">
@@ -228,10 +229,20 @@
                                     </button>
                                 </form>
                             </td>
+                            <td class="p-4 text-center">
+                                <form action="{{ route('admin.deleteAttendance', $item->id) }}" method="POST"
+                                      onsubmit="return confirm('Yakin ingin menghapus data presensi ini?\n{{ $item->user->name ?? '' }} - {{ $item->date }}')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="px-3 py-1.5 bg-rose-500 hover:bg-rose-600 text-white font-bold rounded-lg text-xs transition flex items-center gap-1.5 mx-auto">
+                                        <i class="fa-solid fa-trash text-[10px]"></i> Hapus
+                                    </button>
+                                </form>
+                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="p-8 text-center text-slate-400 font-medium">
+                            <td colspan="8" class="p-8 text-center text-slate-400 font-medium">
                                 Tidak ada data absensi untuk filter ini.
                             </td>
                         </tr>

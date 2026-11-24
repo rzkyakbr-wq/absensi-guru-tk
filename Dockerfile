@@ -21,6 +21,10 @@ RUN apt-get update && apt-get install -y \
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) gd zip pdo pdo_pgsql pgsql
 
+# PHP custom config: increase upload limit for profile photos
+RUN echo "upload_max_filesize = 10M\npost_max_size = 12M\nmemory_limit = 256M\nmax_execution_time = 60" \
+    > /usr/local/etc/php/conf.d/uploads.ini
+
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
@@ -44,6 +48,7 @@ RUN echo 'server {\n\
     root /var/www/public;\n\
     index index.php index.html;\n\
     server_name _;\n\
+    client_max_body_size 15M;\n\
     location / {\n\
         try_files $uri $uri/ /index.php?$query_string;\n\
     }\n\

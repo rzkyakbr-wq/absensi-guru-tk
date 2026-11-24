@@ -75,6 +75,17 @@ class AdminController extends Controller
         return Excel::download(new AttendanceExport($guruId, $startDate, $endDate), $fileName);
     }
 
+    // Hapus Data Presensi oleh Admin
+    public function deleteAttendance($attendanceId)
+    {
+        $attendance = Attendance::findOrFail($attendanceId);
+        $gurNama = $attendance->user->name ?? 'Guru';
+        $tanggal = $attendance->date;
+        $attendance->delete();
+
+        return back()->with('success', "Data presensi {$gurNama} tanggal {$tanggal} berhasil dihapus!");
+    }
+
     // Reset Password Guru oleh Admin
     public function resetGuruPassword(Request $request, $userId)
     {
